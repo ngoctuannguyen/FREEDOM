@@ -14,6 +14,7 @@ from utils.configurator import Config
 from utils.utils import init_seed, get_model, get_trainer, dict2str
 import platform
 import os
+import numpy as np
 
 
 def quick_start(model, dataset, config_dict, save_model=True):
@@ -74,11 +75,21 @@ def quick_start(model, dataset, config_dict, save_model=True):
         model = get_model(config['model'])(config, train_data).to(config['device'])
         logger.info(model)
 
+        if hasattr(model, 'get_emb'):
+            emb_dict_before = model.get_emb()
+            for k, v in emb_dict_before.items():
+                np.save(f'{config["dataset"]}_{config["model"]}_{idx}_{k}_before.npy', v)
+
         # trainer loading and initialization
         trainer = get_trainer()(config, model)
         # debug
         # model training
         best_valid_score, best_valid_result, best_test_upon_valid = trainer.fit(train_data, valid_data=valid_data, test_data=test_data, saved=save_model)
+        
+        if hasattr(model, 'get_emb'):
+            emb_dict_after = model.get_emb()
+            for k, v in emb_dict_after.items():
+                np.save(f'{config["dataset"]}_{config["model"]}_{idx}_{k}_after.npy', v)
         #########
         hyper_ret.append((hyper_tuple, best_valid_result, best_test_upon_valid))
 
