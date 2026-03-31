@@ -244,6 +244,8 @@ class Trainer(AbstractTrainer):
                         self.logger.info(update_output)
                     self.best_valid_result = valid_result
                     self.best_test_upon_valid = test_result
+                    if hasattr(self.model, 'get_emb'):
+                        self.best_emb_dict = self.model.get_emb()
 
                 if stop_flag:
                     stop_output = '+++++Finished training, best eval result in epoch %d' % \
