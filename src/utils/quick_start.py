@@ -48,6 +48,7 @@ def quick_start(model, dataset, config_dict, save_model=True):
     val_metric = config['valid_metric'].lower()
     best_test_value = 0.0
     idx = best_test_idx = 0
+    global_best_emb_dict = None
 
     logger.info('\n\n=================================\n\n')
 
@@ -86,10 +87,7 @@ def quick_start(model, dataset, config_dict, save_model=True):
         # model training
         best_valid_score, best_valid_result, best_test_upon_valid = trainer.fit(train_data, valid_data=valid_data, test_data=test_data, saved=save_model)
         
-        if hasattr(model, 'get_emb'):
-            emb_dict_after = model.get_emb()
-            for k, v in emb_dict_after.items():
-                np.save(f'{config["dataset"]}_{config["model"]}_{idx}_{k}_after.npy', v)
+        # We now delay saving the best overall embedding to the end of the combinators loop
         #########
         hyper_ret.append((hyper_tuple, best_valid_result, best_test_upon_valid))
 
@@ -97,6 +95,8 @@ def quick_start(model, dataset, config_dict, save_model=True):
         if best_test_upon_valid[val_metric] > best_test_value:
             best_test_value = best_test_upon_valid[val_metric]
             best_test_idx = idx
+            if hasattr(trainer, 'best_emb_dict'):
+                global_best_emb_dict = trainer.best_emb_dict
         idx += 1
 
         logger.info('best valid result: {}'.format(dict2str(best_valid_result)))
@@ -116,4 +116,9 @@ def quick_start(model, dataset, config_dict, save_model=True):
                                                                    hyper_ret[best_test_idx][0],
                                                                    dict2str(hyper_ret[best_test_idx][1]),
                                                                    dict2str(hyper_ret[best_test_idx][2])))
+                                                                   
+    if global_best_emb_dict is not None:
+        logger.info("Saving embeddings from the globally best-performing model checkpoint...")
+        for k, v in global_best_emb_dict.items():
+            np.save(f'{config["dataset"]}_{config["model"]}_best.npy', v)
 
