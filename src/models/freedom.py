@@ -220,3 +220,12 @@ class FREEDOM(GeneralRecommender):
         scores = torch.matmul(u_embeddings, restore_item_e.transpose(0, 1))
         return scores
 
+    def get_emb(self):
+        res = {
+            'item_id_emb': self.item_id_embedding.weight.detach().cpu().numpy()
+        }
+        if self.t_feat is not None:
+            res['text_emb'] = self.text_trs(self.text_embedding.weight).detach().cpu().numpy()
+        if self.v_feat is not None:
+            res['image_emb'] = self.image_trs(self.image_embedding.weight).detach().cpu().numpy()
+        return res
